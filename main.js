@@ -4,8 +4,10 @@ import firebase from 'firebase/app';
 import 'firebase/firestore';
 
 const firebaseConfig = {
-  // your config
+// firebase config -> removed from github repo
 };
+
+console.log("LOADING WEBSITE");
 
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
@@ -28,7 +30,6 @@ let remoteStream = null;
 
 // HTML elements
 const webcamButton = document.getElementById('webcamButton');
-const webcamVideo = document.getElementById('webcamVideo');
 const callButton = document.getElementById('callButton');
 const callInput = document.getElementById('callInput');
 const answerButton = document.getElementById('answerButton');
@@ -38,7 +39,7 @@ const hangupButton = document.getElementById('hangupButton');
 // 1. Setup media sources
 
 webcamButton.onclick = async () => {
-  localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
   remoteStream = new MediaStream();
 
   // Push tracks from local stream to peer connection
@@ -53,7 +54,6 @@ webcamButton.onclick = async () => {
     });
   };
 
-  webcamVideo.srcObject = localStream;
   remoteVideo.srcObject = remoteStream;
 
   callButton.disabled = false;
@@ -91,6 +91,8 @@ callButton.onclick = async () => {
     const data = snapshot.data();
     if (!pc.currentRemoteDescription && data?.answer) {
       const answerDescription = new RTCSessionDescription(data.answer);
+      console.log("callDoc.onSnapshot() -> pc.SetRemoteDescription()");
+      console.log(answerDescription);
       pc.setRemoteDescription(answerDescription);
     }
   });
@@ -100,6 +102,7 @@ callButton.onclick = async () => {
     snapshot.docChanges().forEach((change) => {
       if (change.type === 'added') {
         const candidate = new RTCIceCandidate(change.doc.data());
+        console.log("pc.addIceCandidate");
         pc.addIceCandidate(candidate);
       }
     });
@@ -122,6 +125,8 @@ answerButton.onclick = async () => {
   const callData = (await callDoc.get()).data();
 
   const offerDescription = callData.offer;
+  console.log("answerButton -> pc.setRemoteDescription()");
+  console.log(offerDescription);
   await pc.setRemoteDescription(new RTCSessionDescription(offerDescription));
 
   const answerDescription = await pc.createAnswer();
